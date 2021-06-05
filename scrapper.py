@@ -185,7 +185,6 @@ def process_categories():
 						f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}')
 				except:
 					print('error!')
-					continue
 				new_soup = BeautifulSoup(new_content, 'html.parser')
 				new_staff = process_books_list(new_soup)
 				if new_staff:
