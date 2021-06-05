@@ -79,18 +79,21 @@ class Book:
 
 		rows = table.find_all('tr')
 
-		isbn_all_info = next(iter([x for x in rows if type(x) == element.Tag and 'ISBN' in x.text.upper()]), '')
-		isbn_rows = [x.text for x in isbn_all_info if type(x) == element.Tag and 'ISBN' not in x.text.upper()]
-		isbn = next(iter(x for x in isbn_rows if re.search(r'\d+', x)))
-		self.isbn = re.sub(r'\n', '', isbn)
+		try:
+			isbn_all_info = next(iter([x for x in rows if type(x) == element.Tag and 'ISBN' in x.text.upper()]), '')
+			isbn_rows = [x.text for x in isbn_all_info if type(x) == element.Tag and 'ISBN' not in x.text.upper()]
+			isbn = next(iter(x for x in isbn_rows if re.search(r'\d+', x)))
+			self.isbn = re.sub(r'\n', '', isbn)
+		except:
+			self.isbn==''
 
-		ean_all_info = next(iter([x for x in rows if type(x) == element.Tag and 'EAN' in x.text.upper()]), '')
-		ean_rows = [x.text for x in ean_all_info if type(x) == element.Tag and 'EAN' not in x.text.upper()]
-		ean = next(iter(x for x in ean_rows if re.search(r'\d+', x)))
-		# ean= next(
-		# 	iter([x.text for x in ean_all_info if type(x) == element.Tag and 'EAN' not in x.text.upper()]),
-		# 	'')
-		self.ean = re.sub(r'\n', '', ean)
+		try:
+			ean_all_info = next(iter([x for x in rows if type(x) == element.Tag and 'EAN' in x.text.upper()]), '')
+			ean_rows = [x.text for x in ean_all_info if type(x) == element.Tag and 'EAN' not in x.text.upper()]
+			ean = next(iter(x for x in ean_rows if re.search(r'\d+', x)))
+			self.ean = re.sub(r'\n', '', ean)
+		except:
+			self.ean=''
 
 	def get_book_price(self, price_type):
 		if price_type == 'actual':
