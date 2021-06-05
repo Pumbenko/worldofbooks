@@ -169,7 +169,6 @@ def process_books_list(soup):
 
 
 def process_categories():
-
 	page = 1
 	available_pages = True
 	while available_pages:
