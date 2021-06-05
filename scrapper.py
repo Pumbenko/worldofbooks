@@ -179,6 +179,7 @@ def process_categories():
 					all_books_list.extend(new_staff)
 				else:
 					available_pages = False
+					print(f'ended on page {page}')
 			page += 1
 			print(f'page {page} finished!')
 

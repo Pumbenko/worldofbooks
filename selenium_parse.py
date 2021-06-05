@@ -8,7 +8,7 @@ def get_page_content(url):
 	options = Options()
 	options.headless = True
 
-	driver = webdriver.Chrome('./chromedriver_mac') if platform=='darwin' else webdriver.Chrome('./chromedriver_linux')
+	driver = webdriver.Chrome('./chromedriver_mac') if platform=='darwin' else webdriver.Chrome('./chromedriver_linux', options=options)
 	driver.get(url)
 	page_source = driver.page_source
 	driver.quit()
