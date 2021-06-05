@@ -156,12 +156,12 @@ def process_books_list(soup):
 	result = []
 	if books_list:
 		for book in books_list:
-			# try:
+			try:
 				result.append(
 					Book(book_Tag=book)
 					)
-			# except Exception as d:
-			# 	pass
+			except Exception as d:
+				pass
 	return result
 
 
