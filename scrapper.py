@@ -24,8 +24,7 @@ class Book:
 		self.products_sold = self.get_products_sold()
 		self.postage = self.get_postage()
 		self.delivery = self.get_delivery()
-		self.pictures_list = self.get_pictures()
-		# self.picture = ''
+		self.picture = self.get_picture()
 		self.category = self.get_category()
 		self.ean = ''
 		self.isbn = ''
@@ -40,8 +39,6 @@ class Book:
 		about_section = next(iter(self.details.find_all('div', {'class': 'prodDetailSec'})), None)
 		return about_section.text if about_section else ''
 
-	def set_picture(self, picture):
-		self.picture = picture
 
 	def get_ebay_product_number(self):
 		result = next(iter(self.details.find_all('div', {'id': 'descItemNumber'})), '')
@@ -100,7 +97,8 @@ class Book:
 			price_all_info = next(iter(self.details.find_all('span', {'id': 'prcIsum'})), '')
 		else:
 			price_all_info = next(iter(self.details.find_all('span', {'class': 'vi-originalPrice'})), '')
-		price = re.search(r'\d+.?\d+', price_all_info.text)
+
+		price = re.search(r'\d+.?\d+', price_all_info.text) if price_all_info else ''
 		return price.group() if price else '0.00'
 
 	def get_product_rating(self):
@@ -123,9 +121,9 @@ class Book:
 		result = next(iter(self.details.find_all('div', {'class': 'sh-inline-div'})), '')
 		return result.text if result else ''
 
-	def get_pictures(self):
+	def get_picture(self):
 		result = next(iter(self.details.find_all('div', {'id': 'PicturePanel'})), '')
-		return list(set([x['src'] for x in result.find_all('img') if 'i.ebayimg.com/images/' in x['src']]))
+		return next(iter([x['src'] for x in result.find_all('img') if 'i.ebayimg.com/images/' in x['src']]), '')
 
 	def get_postage(self):
 		cost = next(iter(self.details.find_all('span', {'id': 'fshippingCost'})), '')
@@ -141,8 +139,6 @@ class Book:
 
 
 def get_info(url):
-	import urllib.request
-	# urllib.request.urlretrieve(url, "test.txt")
 	page = requests.get(url)
 	soup = BeautifulSoup(page.content, 'html.parser')
 
@@ -164,17 +160,12 @@ def process_books_list(soup):
 
 
 def process_categories():
-	# soup_initial= get_info('https://www.ebay.co.uk/sch/worldofbooks08/m.html?_nkw=&_armrs=1&_ipg=&_from=')
-	# initial_staff= process_books_list(soup_initial)
-	# all_books_list.extend(initial_staff)
-
 	all_books_list = []
 	page = 1
-	items = 0
 	available_pages = True
 	while available_pages:
-		# soup=get_info(f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}&_skc={items}&rt=nc')
 		soup = get_info(f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}')
+		print(f'page {page} started...')
 		if soup:
 			staff = process_books_list(soup)
 			if staff:
@@ -189,21 +180,13 @@ def process_categories():
 				else:
 					available_pages = False
 			page += 1
-			items += 50
+			print(f'page {page} finished!')
 
 	df = pd.DataFrame([x.__dict__ for x in all_books_list])
 	df.drop('details', axis='columns', inplace=True)
 
 	df.to_csv('demo_results.csv', sep=';', index=None)
-	# writer = pd.ExcelWriter('demo_results.xlsx', engine='xlsxwriter')
-	# s=9
-	# with pd.ExcelWriter('demo_results.xlsx', engine='openpyxl', mode='w') as writer:
-	# 	df.to_excel(writer, sheet_name='demo', startrow=1, startcol=1, index=False)
-	# 	# sheet = writer.sheets['demo']
-	# 	writer.save()
-	# df.to_excel(excel_writer=writer, sheet_name='demo') #, index=None, engine = 'xlsxwriter')
-	a = 5
-	print('ready!')
 
+	print('ready!')
 
 process_categories()
