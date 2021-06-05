@@ -171,10 +171,11 @@ def process_categories():
 			if staff:
 				all_books_list.extend(staff)
 			else:
-				new_content = selenium_parse.get_page_content(
-					f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}')
-				new_soup = BeautifulSoup(new_content, 'html.parser')
-				new_staff = process_books_list(new_soup)
+				new_staff=None
+				# new_content = selenium_parse.get_page_content(
+				# 	f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}')
+				# new_soup = BeautifulSoup(new_content, 'html.parser')
+				# new_staff = process_books_list(new_soup)
 				if new_staff:
 					all_books_list.extend(new_staff)
 				else:
