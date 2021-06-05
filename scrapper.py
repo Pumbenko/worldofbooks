@@ -46,24 +46,27 @@ class Book:
 
 	def get_sku(self):
 		iframe = next(iter(self.details.find_all('iframe', {'id': 'desc_ifr'})), None)
-		details_all = get_info(iframe['src'])
-		details = next(iter(details_all.find_all('div', {'id': 'details'})), None)
-		details_all_contents = next(
-			iter([x.contents for x in details.contents if type(x) == element.Tag and x.name == 'table']), None)
-		details_row_contents = next(
-			iter([x.contents for x in details_all_contents if type(x) == element.Tag and 'SKU' in x.text.upper()]),
-			None)
-		sku = next(
-			iter([x.text for x in details_row_contents if type(x) == element.Tag and 'SKU' not in x.text.upper()]), '')
-		if not self.isbn:
+		if iframe:
+			details_all = get_info(iframe['src'])
+			details = next(iter(details_all.find_all('div', {'id': 'details'})), None)
+			details_all_contents = next(
+				iter([x.contents for x in details.contents if type(x) == element.Tag and x.name == 'table']), None)
 			details_row_contents = next(
-				iter([x.contents for x in details_all_contents if type(x) == element.Tag and 'ISBN' in x.text.upper()]),
+				iter([x.contents for x in details_all_contents if type(x) == element.Tag and 'SKU' in x.text.upper()]),
 				None)
-			self.isbn = next(
-				iter([x.text for x in details_row_contents if type(x) == element.Tag and 'ISBN' not in x.text.upper()]),
-				'')
+			sku = next(
+				iter([x.text for x in details_row_contents if type(x) == element.Tag and 'SKU' not in x.text.upper()]), '')
+			if not self.isbn:
+				details_row_contents = next(
+					iter([x.contents for x in details_all_contents if type(x) == element.Tag and 'ISBN' in x.text.upper()]),
+					None)
+				self.isbn = next(
+					iter([x.text for x in details_row_contents if type(x) == element.Tag and 'ISBN' not in x.text.upper()]),
+					'')
 
-		return sku if sku else ''
+			return sku if sku else ''
+		else:
+			return ''
 
 	def get_category(self):
 		category_all_info = next(iter(self.details.find_all('ul', {'aria-label': 'Listed in category:'})), '')
