@@ -150,12 +150,13 @@ def process_books_list(soup):
 	result = []
 	if books_list:
 		for book in books_list:
-			try:
+				print(book)
+			# try:
 				result.append(
 					Book(book_Tag=book)
 					)
-			except Exception as d:
-				pass
+			# except Exception as d:
+			# 	pass
 	return result
 
 
@@ -166,7 +167,7 @@ def process_categories():
 	while available_pages:
 		soup = get_info(f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}')
 		print(f'page {page} started...')
-		print(str(soup))
+		# print(str(soup))
 		if soup:
 			staff = process_books_list(soup)
 			if staff:
