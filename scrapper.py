@@ -33,12 +33,10 @@ class Book:
 		self.ebay_product_number = self.get_ebay_product_number()
 		self.sku = self.get_sku()
 		self.about_this_product = self.get_about_this_product()
-		a = 5
 
 	def get_about_this_product(self):
 		about_section = next(iter(self.details.find_all('div', {'class': 'prodDetailSec'})), None)
 		return about_section.text if about_section else ''
-
 
 	def get_ebay_product_number(self):
 		result = next(iter(self.details.find_all('div', {'id': 'descItemNumber'})), '')
@@ -64,7 +62,6 @@ class Book:
 					self.isbn = next(
 						iter([x.text for x in details_row_contents if type(x) == element.Tag and 'ISBN' not in x.text.upper()]),
 						'')
-
 				return sku if sku else ''
 			else:
 				return ''
@@ -75,24 +72,17 @@ class Book:
 		category_all_info = next(iter(self.details.find_all('ul', {'aria-label': 'Listed in category:'})), '')
 		return '/'.join([re.sub(r'\n', '', x.text) for x in category_all_info.find_all('li', {'class': 'bc-w'})][:-1])
 
-	# return price.group() if price else '0.00'
-
 	def get_ean_and_isbn(self):
-		if 'Tainted Love: A gripping thriller with a shocking twis' in self.name:
-			a = 5
 		table = next(iter(self.details.find_all('div', {'class': 'itemAttr'})), '')
 		self.item_specifics = table.text if table else ''
-
 		rows = table.find_all('tr')
-
 		try:
 			isbn_all_info = next(iter([x for x in rows if type(x) == element.Tag and 'ISBN' in x.text.upper()]), '')
 			isbn_rows = [x.text for x in isbn_all_info if type(x) == element.Tag and 'ISBN' not in x.text.upper()]
 			isbn = next(iter(x for x in isbn_rows if re.search(r'\d+', x)))
 			self.isbn = re.sub(r'\n', '', isbn)
 		except:
-			self.isbn==''
-
+			self.isbn=''
 		try:
 			ean_all_info = next(iter([x for x in rows if type(x) == element.Tag and 'EAN' in x.text.upper()]), '')
 			ean_rows = [x.text for x in ean_all_info if type(x) == element.Tag and 'EAN' not in x.text.upper()]
@@ -140,7 +130,6 @@ class Book:
 		cost = re.search(r'\d+.?\d+', cost.text).group() if cost else ''
 		shipping_svc = re.sub(r'\n|\t', '', shipping_svc.text) if shipping_svc else ''
 		cost = f'{cost}, ' if cost else ''
-
 		return f'{cost}{shipping_svc}'
 
 	def __repr__(self):
@@ -150,7 +139,6 @@ class Book:
 def get_info(url):
 	page = requests.get(url)
 	soup = BeautifulSoup(page.content, 'html.parser')
-
 	return soup
 
 
@@ -180,6 +168,7 @@ def process_categories():
 			if staff:
 				all_books_list.extend(staff)
 			else:
+				new_content=''
 				try:
 					new_content = selenium_parse.get_page_content(
 						f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}')
