@@ -156,7 +156,6 @@ def process_books_list(soup):
 	result = []
 	if books_list:
 		for book in books_list:
-				print(book)
 			# try:
 				result.append(
 					Book(book_Tag=book)
