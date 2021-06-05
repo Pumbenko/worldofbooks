@@ -159,44 +159,48 @@ def process_books_list(soup):
 	result = []
 	if books_list:
 		for book in books_list:
-			# try:
+			try:
 				result.append(
 					Book(book_Tag=book)
 					)
-			# except Exception as d:
-			# 	pass
+			except Exception as d:
+				pass
 	return result
 
 
 def process_categories():
-	all_books_list = []
+
 	page = 1
 	available_pages = True
 	while available_pages:
 		soup = get_info(f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}')
 		print(f'page {page} started...')
 		if soup:
+			all_books_list = []
 			staff = process_books_list(soup)
 			if staff:
 				all_books_list.extend(staff)
 			else:
-				new_staff=None
-				# new_content = selenium_parse.get_page_content(
-				# 	f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}')
-				# new_soup = BeautifulSoup(new_content, 'html.parser')
-				# new_staff = process_books_list(new_soup)
+				try:
+					new_content = selenium_parse.get_page_content(
+						f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}')
+				except:
+					print('error!')
+					continue
+				new_soup = BeautifulSoup(new_content, 'html.parser')
+				new_staff = process_books_list(new_soup)
 				if new_staff:
 					all_books_list.extend(new_staff)
 				else:
 					available_pages = False
 					print(f'ended on page {page}')
-			page += 1
+
+			df = pd.DataFrame([x.__dict__ for x in all_books_list])
+			df.drop('details', axis='columns', inplace=True)
+
+			df.to_csv(f'temp/temp_results_{page}.csv', sep=';', index=None)
 			print(f'page {page} finished!')
-
-	df = pd.DataFrame([x.__dict__ for x in all_books_list])
-	df.drop('details', axis='columns', inplace=True)
-
-	df.to_csv('demo_results.csv', sep=';', index=None)
+			page += 1
 
 	print('ready!')
 
