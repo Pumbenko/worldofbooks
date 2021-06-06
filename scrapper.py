@@ -1,12 +1,10 @@
 import selenium_parse
 
 import re
-
 import requests
 from bs4 import BeautifulSoup, element
 import pandas as pd
-import xlsxwriter
-import openpyxl
+
 
 
 class Book:
