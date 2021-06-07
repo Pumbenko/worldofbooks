@@ -1,5 +1,6 @@
 import selenium_parse
 
+import sys
 import re
 import requests
 from bs4 import BeautifulSoup, element
@@ -57,9 +58,11 @@ class Book:
 					details_row_contents = next(
 						iter([x.contents for x in details_all_contents if type(x) == element.Tag and 'ISBN' in x.text.upper()]),
 						None)
-					self.isbn = next(
-						iter([x.text for x in details_row_contents if type(x) == element.Tag and 'ISBN' not in x.text.upper()]),
+					isbn = next(
+						iter([x.text for x in details_row_contents if type(x) == element.Tag and 'ISBN' not in x.text.upper()
+							  and re.search(r'\d{10}', x)]),
 						'')
+					self.isbn= isbn
 				return sku if sku else ''
 			else:
 				return ''
@@ -78,14 +81,14 @@ class Book:
 		try:
 			isbn_all_info = next(iter([x for x in rows if type(x) == element.Tag and 'ISBN' in x.text.upper()]), '')
 			isbn_rows = [x.text for x in isbn_all_info if type(x) == element.Tag and 'ISBN' not in x.text.upper()]
-			isbn = next(iter(x for x in isbn_rows if re.search(r'\d+', x)))
+			isbn = next(iter(x for x in isbn_rows if re.search(r'\d{10}', x)))
 			self.isbn = re.sub(r'\n', '', isbn)
 		except:
 			self.isbn=''
 		try:
 			ean_all_info = next(iter([x for x in rows if type(x) == element.Tag and 'EAN' in x.text.upper()]), '')
 			ean_rows = [x.text for x in ean_all_info if type(x) == element.Tag and 'EAN' not in x.text.upper()]
-			ean = next(iter(x for x in ean_rows if re.search(r'\d+', x)))
+			ean = next(iter(x for x in ean_rows if re.search(r'\d{11,}', x)))
 			self.ean = re.sub(r'\n', '', ean)
 		except:
 			self.ean=''
@@ -156,12 +159,15 @@ def process_books_list(soup):
 
 
 def process_categories():
-	print('Please specify page to start scraping from (in case empty - will start from 1):')
-	start_from = input()
-	if start_from:
-		page=int(start_from)
-	else:
+	if 'pydevd' in sys.modules:
 		page = 1
+	else:
+		print('Please specify page to start scraping from (in case empty - will start from 1):')
+		start_from = input()
+		if start_from:
+			page=int(start_from)
+		else:
+			page = 1
 	text = f'Processing pages starting from {str(page)}...'
 	print(text)
 	available_pages = True
