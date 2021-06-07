@@ -5,8 +5,6 @@ import requests
 from bs4 import BeautifulSoup, element
 import pandas as pd
 
-
-
 class Book:
 
 	def __init__(self,
@@ -34,7 +32,9 @@ class Book:
 
 	def get_about_this_product(self):
 		about_section = next(iter(self.details.find_all('div', {'class': 'prodDetailSec'})), None)
-		return about_section.text if about_section else ''
+		result= about_section.text if about_section else ''
+		result=re.sub(r'[\'\"]$','', result)
+		return re.sub(r'\s{2,}','',result)
 
 	def get_ebay_product_number(self):
 		result = next(iter(self.details.find_all('div', {'id': 'descItemNumber'})), '')
@@ -72,7 +72,8 @@ class Book:
 
 	def get_ean_and_isbn(self):
 		table = next(iter(self.details.find_all('div', {'class': 'itemAttr'})), '')
-		self.item_specifics = table.text if table else ''
+		item_specifics = table.text if table else ''
+		self.item_specifics=re.sub(r'\s{2,}','',item_specifics)
 		rows = table.find_all('tr')
 		try:
 			isbn_all_info = next(iter([x for x in rows if type(x) == element.Tag and 'ISBN' in x.text.upper()]), '')
@@ -155,7 +156,14 @@ def process_books_list(soup):
 
 
 def process_categories():
-	page = 1
+	print('Please specify page to start scraping from (in case empty - will start from 1):')
+	start_from = input()
+	if start_from:
+		page=int(start_from)
+	else:
+		page = 1
+	text = f'Processing pages starting from {str(page)}...'
+	print(text)
 	available_pages = True
 	while available_pages:
 		soup = get_info(f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}')
@@ -182,7 +190,6 @@ def process_categories():
 
 			df = pd.DataFrame([x.__dict__ for x in all_books_list])
 			df.drop('details', axis='columns', inplace=True)
-
 			df.to_csv(f'temp/temp_results_{page}.csv', sep=';', index=None)
 			print(f'page {page} finished!')
 			page += 1
