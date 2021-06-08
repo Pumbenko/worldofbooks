@@ -163,9 +163,12 @@ def process_books_list(soup):
 
 
 def process_categories():
+	amount = 0
 	if 'pydevd' in sys.modules:
-		page = 1
-		end_with=10
+		page = 5
+		amount = page * 50 - 50
+		end_with=100
+
 	else:
 		print('Please specify page to START scraping from (in case empty - will start from 1):')
 		try:
@@ -179,8 +182,10 @@ def process_categories():
 			end_with= start_from + 100
 		if start_from:
 			page=start_from
+			amount = start_from * 50 - 50
 		else:
 			page = 1
+			amount = 0
 
 	text = f'Processing pages starting from {str(page)}...'
 	print(text)
@@ -189,7 +194,8 @@ def process_categories():
 		if page >= int(end_with):
 			print('ready!')
 			return
-		soup = get_info(f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}')
+		# soup = get_info(f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}')
+		soup = get_info(f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}&_skc={amount}&rt=nc')
 		print(f'page {page} started...')
 		if soup:
 			all_books_list = []
@@ -197,14 +203,8 @@ def process_categories():
 			if staff:
 				all_books_list.extend(staff)
 			else:
-				new_content=''
-				try:
-					new_content = selenium_parse.get_page_content(
-						f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}')
-				except:
-					print('error!')
-					print(f'starting over page {page}')
-					continue
+				new_content = selenium_parse.get_page_content(
+					f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}&_skc={amount}&rt=nc')
 				new_soup = BeautifulSoup(new_content, 'html.parser')
 				new_staff = process_books_list(new_soup)
 				if new_staff:
@@ -212,12 +212,19 @@ def process_categories():
 				else:
 					available_pages = False
 					print(f'ended on page {page}')
+			try:
+				df = pd.DataFrame([x.__dict__ for x in all_books_list])
+				df.drop('details', axis='columns', inplace=True)
+				df.to_csv(f'temp/temp_results_{page}.csv', sep=';', index=None)
+			except Exception as e:
+				print(f'error! {e}')
+				print(f'starting over page {page}')
+				available_pages = True
+				continue
 
-			df = pd.DataFrame([x.__dict__ for x in all_books_list])
-			df.drop('details', axis='columns', inplace=True)
-			df.to_csv(f'temp/temp_results_{page}.csv', sep=';', index=None)
 			print(f'page {page} finished!')
 			page += 1
+			amount+=50
 
 	print('ready!')
 
