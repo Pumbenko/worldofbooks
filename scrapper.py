@@ -33,9 +33,10 @@ class Book:
 
 	def get_about_this_product(self):
 		about_section = next(iter(self.details.find_all('div', {'class': 'prodDetailSec'})), None)
-		result= about_section.text if about_section else ''
-		result=re.sub(r'[\'\"]$','', result)
-		return re.sub(r'\s{2,}','',result)
+		return str(about_section) if about_section else ''
+		# result= about_section.text if about_section else ''
+		# result=re.sub(r'[\'\"]$','', result)
+		# return re.sub(r'\s{2,}','',result)
 
 	def get_ebay_product_number(self):
 		result = next(iter(self.details.find_all('div', {'id': 'descItemNumber'})), '')
@@ -75,8 +76,8 @@ class Book:
 
 	def get_ean_and_isbn(self):
 		table = next(iter(self.details.find_all('div', {'class': 'itemAttr'})), '')
-		item_specifics = table.text if table else ''
-		self.item_specifics=re.sub(r'\s{2,}','',item_specifics)
+		# item_specifics = table.text if table else ''
+		self.item_specifics=str(table) if table else '' # re.sub(r'\s{2,}','',item_specifics)
 		rows = table.find_all('tr')
 		try:
 			isbn_all_info = next(iter([x for x in rows if type(x) == element.Tag and 'ISBN' in x.text.upper()]), '')
@@ -88,7 +89,7 @@ class Book:
 		try:
 			ean_all_info = next(iter([x for x in rows if type(x) == element.Tag and 'EAN' in x.text.upper()]), '')
 			ean_rows = [x.text for x in ean_all_info if type(x) == element.Tag and 'EAN' not in x.text.upper()]
-			ean = next(iter(x for x in ean_rows if re.search(r'\d{11,}', x)))
+			ean = next(iter(x for x in ean_rows if re.search(r'\d{13}', x)))
 			self.ean = re.sub(r'\n', '', ean)
 		except:
 			self.ean=''
@@ -122,9 +123,12 @@ class Book:
 		result = next(iter(self.details.find_all('div', {'class': 'sh-inline-div'})), '')
 		return result.text if result else ''
 
+
 	def get_picture(self):
-		result = next(iter(self.details.find_all('div', {'id': 'PicturePanel'})), '')
-		return next(iter([x['src'] for x in result.find_all('img') if 'i.ebayimg.com/images/' in x['src']]), '')
+		pictures = next(iter(self.details.find_all('div', {'id': 'PicturePanel'})), '')
+		result_temp= next(iter([x['src'] for x in pictures.find_all('img') if 'i.ebayimg.com/images/' in x['src']]), '')
+		result=	re.sub(r'[lL]300', 'l500', result_temp)
+		return result
 
 	def get_postage(self):
 		cost = next(iter(self.details.find_all('span', {'id': 'fshippingCost'})), '')
@@ -161,17 +165,30 @@ def process_books_list(soup):
 def process_categories():
 	if 'pydevd' in sys.modules:
 		page = 1
+		end_with=10
 	else:
-		print('Please specify page to start scraping from (in case empty - will start from 1):')
-		start_from = input()
+		print('Please specify page to START scraping from (in case empty - will start from 1):')
+		try:
+			start_from = int(input())
+		except:
+			start_from=1
+		print('Please specify the page to END with (if empty - will be stars with +100): ')
+		try:
+			end_with=int(input())
+		except:
+			end_with= start_from + 100
 		if start_from:
-			page=int(start_from)
+			page=start_from
 		else:
 			page = 1
+
 	text = f'Processing pages starting from {str(page)}...'
 	print(text)
 	available_pages = True
 	while available_pages:
+		if page >= int(end_with):
+			print('ready!')
+			return
 		soup = get_info(f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}')
 		print(f'page {page} started...')
 		if soup:
