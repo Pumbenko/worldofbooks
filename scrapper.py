@@ -1,3 +1,5 @@
+import os
+
 import selenium_parse
 
 import sys
@@ -5,6 +7,28 @@ import re
 import requests
 from bs4 import BeautifulSoup, element
 import pandas as pd
+
+shops=[
+	'bluesky_cosmetics',
+	'currys_pcworld',
+	'loreal_official_beautyshop',
+	'golfclubs4cash',
+	'hamleysoflondon',
+	'justbeauty - uk',
+	'lindens - official',
+	'musicmagpie',
+	'ozaroo',
+	'shopto_outlet',
+	'theentertainertoyshop',
+	'theentertainmentstore',
+	'wahlukstore',
+	'wilkinson_sword_uk',
+	'windswepttoys',
+	'xtremepharmacy',
+	]
+
+
+
 
 class Book:
 
@@ -43,31 +67,34 @@ class Book:
 		return result.text if result else ''
 
 	def get_sku(self):
-		iframe = next(iter(self.details.find_all('iframe', {'id': 'desc_ifr'})), None)
-		if iframe:
-			details_all = get_info(iframe['src'])
-			details = next(iter(details_all.find_all('div', {'id': 'details'})), None)
-			if details:
-				details_all_contents = next(
-					iter([x.contents for x in details.contents if type(x) == element.Tag and x.name == 'table']), None)
-				details_row_contents = next(
-					iter([x.contents for x in details_all_contents if type(x) == element.Tag and 'SKU' in x.text.upper()]),
-					None)
-				sku = next(
-					iter([x.text for x in details_row_contents if type(x) == element.Tag and 'SKU' not in x.text.upper()]), '')
-				if not self.isbn:
+		try:
+			iframe = next(iter(self.details.find_all('iframe', {'id': 'desc_ifr'})), None)
+			if iframe:
+				details_all = get_info(iframe['src'])
+				details = next(iter(details_all.find_all('div', {'id': 'details'})), None)
+				if details:
+					details_all_contents = next(
+						iter([x.contents for x in details.contents if type(x) == element.Tag and x.name == 'table']), None)
 					details_row_contents = next(
-						iter([x.contents for x in details_all_contents if type(x) == element.Tag and 'ISBN' in x.text.upper()]),
+						iter([x.contents for x in details_all_contents if type(x) == element.Tag and 'SKU' in x.text.upper()]),
 						None)
-					isbn = next(
-						iter([x.text for x in details_row_contents if type(x) == element.Tag and 'ISBN' not in x.text.upper()
-							  and re.search(r'\d{10}', x)]),
-						'')
-					self.isbn= isbn
-				return sku if sku else ''
+					sku = next(
+						iter([x.text for x in details_row_contents if type(x) == element.Tag and 'SKU' not in x.text.upper()]), '')
+					if not self.isbn:
+						details_row_contents = next(
+							iter([x.contents for x in details_all_contents if type(x) == element.Tag and 'ISBN' in x.text.upper()]),
+							None)
+						isbn = next(
+							iter([x.text for x in details_row_contents if type(x) == element.Tag and 'ISBN' not in x.text.upper()
+								  and re.search(r'\d{10}', x)]),
+							'')
+						self.isbn= isbn
+					return sku if sku else ''
+				else:
+					return ''
 			else:
 				return ''
-		else:
+		except:
 			return ''
 
 	def get_category(self):
@@ -153,16 +180,12 @@ def process_books_list(soup):
 	result = []
 	if books_list:
 		for book in books_list:
-			try:
-				result.append(
-					Book(book_Tag=book)
-					)
-			except Exception as d:
-				pass
+			result.append(
+				Book(book_Tag=book))
 	return result
 
 
-def process_categories():
+def process_categories(shop):
 	amount = 0
 	if 'pydevd' in sys.modules:
 		page = 5
@@ -186,46 +209,56 @@ def process_categories():
 		else:
 			page = 1
 			amount = 0
+	page_start_initial=page
+	amount_initial=amount
+	for shop in shops:
+		text = f'Processing pages for shop {shop} starting from {str(page)}...'
+		print(text)
+		available_pages = True
+		available_shops = True
+		while available_pages:
+			if page >= int(end_with) and not available_shops:
+				print('ready!')
+				return
+			elif page >= int(end_with) and available_shops:
+				page = page_start_initial
+				amount = amount_initial
 
-	text = f'Processing pages starting from {str(page)}...'
-	print(text)
-	available_pages = True
-	while available_pages:
-		if page >= int(end_with):
-			print('ready!')
-			return
-		# soup = get_info(f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}')
-		soup = get_info(f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}&_skc={amount}&rt=nc')
-		print(f'page {page} started...')
-		if soup:
-			all_books_list = []
-			staff = process_books_list(soup)
-			if staff:
-				all_books_list.extend(staff)
-			else:
-				new_content = selenium_parse.get_page_content(
-					f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn=worldofbooks08&_pgn={page}&_skc={amount}&rt=nc')
-				new_soup = BeautifulSoup(new_content, 'html.parser')
-				new_staff = process_books_list(new_soup)
-				if new_staff:
-					all_books_list.extend(new_staff)
+			soup = get_info(f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn={shop}&_pgn={page}&_skc={amount}&rt=nc')
+			print(f'page {page} for {shop} started...')
+			if soup:
+				all_books_list = []
+				staff = process_books_list(soup)
+				if staff:
+					all_books_list.extend(staff)
 				else:
-					available_pages = False
-					print(f'ended on page {page}')
-			try:
-				df = pd.DataFrame([x.__dict__ for x in all_books_list])
-				df.drop('details', axis='columns', inplace=True)
-				df.to_csv(f'temp/temp_results_{page}.csv', sep=';', index=None)
-			except Exception as e:
-				print(f'error! {e}')
-				print(f'starting over page {page}')
-				available_pages = True
-				continue
+					new_content = selenium_parse.get_page_content(
+						f'https://www.ebay.co.uk/sch/m.html?_nkw=&_armrs=1&_from=&_ssn={shop}&_pgn={page}&_skc={amount}&rt=nc')
+					new_soup = BeautifulSoup(new_content, 'html.parser')
+					new_staff = process_books_list(new_soup)
+					if new_staff:
+						all_books_list.extend(new_staff)
+					else:
+						available_pages = False
+						print(f'ended on page {page}')
+				try:
+					if not os.path.exists(f'temp/{shop}'):
+						os.makedirs(f'temp/{shop}')
 
-			print(f'page {page} finished!')
-			page += 1
-			amount+=50
+					df = pd.DataFrame([x.__dict__ for x in all_books_list])
+					df.drop('details', axis='columns', inplace=True)
+					df.to_csv(f'temp/{shop}/results_{page}.csv', sep=';', index=None)
+				except Exception as e:
+					print(f'error! {e}')
+					print(f'starting over page {page}')
+					available_pages = True
+					continue
+
+				print(f'page {page} for {shop} finished!')
+				page += 1
+				amount+=50
 
 	print('ready!')
 
-process_categories()
+
+process_categories(shops[1])
