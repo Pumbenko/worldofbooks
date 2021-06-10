@@ -8,28 +8,10 @@ import requests
 from bs4 import BeautifulSoup, element
 import pandas as pd
 
-shops=[
-	'bluesky_cosmetics',
-	'currys_pcworld',
-	'loreal_official_beautyshop',
-	'golfclubs4cash',
-	'hamleysoflondon',
-	'justbeauty - uk',
-	'lindens - official',
-	'musicmagpie',
-	'ozaroo',
-	'shopto_outlet',
-	'theentertainertoyshop',
-	'theentertainmentstore',
-	'wahlukstore',
-	'wilkinson_sword_uk',
-	'windswepttoys',
-	'xtremepharmacy',
-	]
-
-
-
-
+f = open("shops_to_scrape.txt")
+shops_from_file = f.readlines()
+shops=[x.strip() for x in shops_from_file]
+f.close()
 class Book:
 
 	def __init__(self,
@@ -185,7 +167,7 @@ def process_books_list(soup):
 	return result
 
 
-def process_categories(shop):
+def process_categories():
 	amount = 0
 	if 'pydevd' in sys.modules:
 		page = 5
@@ -212,6 +194,7 @@ def process_categories(shop):
 	page_start_initial=page
 	amount_initial=amount
 	for shop in shops:
+		shop=shops_from_file[6]
 		text = f'Processing pages for shop {shop} starting from {str(page)}...'
 		print(text)
 		available_pages = True
@@ -261,4 +244,4 @@ def process_categories(shop):
 	print('ready!')
 
 
-process_categories(shops[1])
+process_categories()
